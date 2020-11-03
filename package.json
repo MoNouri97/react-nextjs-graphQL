@@ -17,8 +17,10 @@
 		"formik": "^2.2.1",
 		"graphql": "^15.4.0",
 		"next": "^9.1.7",
+		"next-urql": "^2.1.1",
 		"react": "^16.12.0",
 		"react-dom": "^16.12.0",
+		"react-is": "^17.0.1",
 		"urql": "^1.10.3"
 	},
 	"license": "MIT",
