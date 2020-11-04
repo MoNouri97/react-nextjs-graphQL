@@ -34,6 +34,7 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
 					isLoading={logoutFetching}
 					mx={3}
 					variant='link'
+					color='white'
 				>
 					Logout
 				</Button>
