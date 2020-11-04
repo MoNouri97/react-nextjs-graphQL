@@ -1,7 +1,9 @@
 import { Box, Button, Flex, Link } from '@chakra-ui/core';
+import { withUrqlClient } from 'next-urql';
 import NextLink from 'next/link';
 import React from 'react';
 import { useLogoutMutation, useMeQuery } from '../generated/graphql';
+import { createUrqlClient } from '../utils/createUrqlClient';
 
 interface NavbarProps {}
 
@@ -44,4 +46,4 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
 		</Flex>
 	);
 };
-export default Navbar;
+export default withUrqlClient(createUrqlClient)(Navbar);

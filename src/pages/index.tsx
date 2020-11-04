@@ -11,7 +11,9 @@ const Index = () => {
 		<>
 			<Navbar />
 			<Text fontSize='6xl'>Index</Text>
-			{!data ? 'loading' : data.posts.map(post => <h1>{post.title}</h1>)}
+			{!data
+				? 'loading'
+				: data.posts.map(post => <h1 key={post.id}>{post.title}</h1>)}
 		</>
 	);
 };
