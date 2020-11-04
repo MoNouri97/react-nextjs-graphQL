@@ -1,14 +1,15 @@
 import { Box, Button, Flex, Link } from '@chakra-ui/core';
-import { withUrqlClient } from 'next-urql';
 import NextLink from 'next/link';
 import React from 'react';
 import { useLogoutMutation, useMeQuery } from '../generated/graphql';
-import { createUrqlClient } from '../utils/createUrqlClient';
+import { isServer } from '../utils/isServer';
 
 interface NavbarProps {}
 
 const Navbar: React.FC<NavbarProps> = ({}) => {
-	const [{ data, fetching }] = useMeQuery();
+	const [{ data, fetching }] = useMeQuery({
+		pause: isServer(),
+	});
 	const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
 	let body = null;
 	if (!fetching && !data?.me) {
@@ -46,4 +47,4 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
 		</Flex>
 	);
 };
-export default withUrqlClient(createUrqlClient)(Navbar);
+export default Navbar;
