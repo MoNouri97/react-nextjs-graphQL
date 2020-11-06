@@ -27,7 +27,10 @@ const Login: React.FC = () => {
 					}
 
 					if (response.data?.login.user) {
-						router.push('/');
+						const nextRoute = router.query.next
+							? (router.query.next as string)
+							: '/';
+						router.push(nextRoute);
 					}
 				}}
 			>
