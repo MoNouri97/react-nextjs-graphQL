@@ -11,11 +11,9 @@ import { createUrqlClient } from '../../utils/createUrqlClient';
 import { toErrorMap } from '../../utils/toErrorMap';
 import NextLink from 'next/link';
 
-interface ChangePasswordProps {
-	token: string;
-}
-const ChangePassword: NextPage<ChangePasswordProps> = ({ token }) => {
+const ChangePassword: React.FC<{}> = () => {
 	const router = useRouter();
+	const token = router.query.token as string;
 	const [, changePassword] = useChangePasswordMutation();
 	const [tokenError, setTokenError] = useState('');
 
@@ -79,9 +77,4 @@ const ChangePassword: NextPage<ChangePasswordProps> = ({ token }) => {
 	);
 };
 
-ChangePassword.getInitialProps = ({ query }) => {
-	return {
-		token: query.token as string,
-	};
-};
-export default withUrqlClient(createUrqlClient)(ChangePassword as any);
+export default withUrqlClient(createUrqlClient)(ChangePassword);
