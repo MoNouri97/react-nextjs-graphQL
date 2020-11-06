@@ -1,5 +1,5 @@
 import { cacheExchange } from '@urql/exchange-graphcache';
-import { ClientOptions, dedupExchange, fetchExchange } from 'urql';
+import { ClientOptions, dedupExchange, Exchange, fetchExchange } from 'urql';
 import {
 	LoginMutation,
 	LogoutMutation,
@@ -8,6 +8,20 @@ import {
 	RegisterMutation,
 } from '../generated/graphql';
 import { betterUpdateQuery } from './betterUpdateQuery';
+import { pipe, tap } from 'wonka';
+import Router from 'next/router';
+
+// global way to catch error
+const errorExchange: Exchange = ({ forward }) => ops$ => {
+	return pipe(
+		forward(ops$),
+		tap(({ error }) => {
+			if (error?.message.includes('not authenticated')) {
+				Router.replace('/login');
+			}
+		}),
+	);
+};
 
 /**
  * URQL has a custom integration with Next.js,
@@ -71,6 +85,7 @@ export const createUrqlClient = (ssrExchange: any): ClientOptions => ({
 				},
 			},
 		}),
+		errorExchange,
 		ssrExchange,
 		fetchExchange,
 	],
