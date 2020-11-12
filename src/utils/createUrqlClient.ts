@@ -1,4 +1,11 @@
-import { cacheExchange, Resolver } from '@urql/exchange-graphcache';
+import {
+	cacheExchange,
+	Data,
+	ResolveInfo,
+	Resolver,
+	Variables,
+	Cache,
+} from '@urql/exchange-graphcache';
 import {
 	ClientOptions,
 	dedupExchange,
@@ -16,6 +23,8 @@ import {
 import { betterUpdateQuery } from './betterUpdateQuery';
 import { pipe, tap } from 'wonka';
 import Router from 'next/router';
+import { NextUrqlContext } from 'next-urql';
+import { isServer } from './isServer';
 
 // global way to catch error
 const errorExchange: Exchange = ({ forward }) => ops$ => {
@@ -67,6 +76,18 @@ const cursorPagination = (): Resolver => {
 	};
 };
 
+// forces URQL to re-fetch a query
+const invalidateQueryCache = (query: string) => {
+	return (_result: Data, args: Variables, cache: Cache, info: ResolveInfo) => {
+		// same as cursor pagination
+		const allFields = cache.inspectFields('Query');
+		const fieldInfos = allFields.filter(field => field.fieldName == query);
+		fieldInfos.forEach(fi => {
+			cache.invalidate('Query', query, fi.arguments || {});
+		});
+	};
+};
+
 /**
  * URQL has a custom integration with Next.js,
  * being next-urql this integration contains convenience methods specifically for Next.js.
@@ -74,68 +95,78 @@ const cursorPagination = (): Resolver => {
  * @example
  * export default withUrqlClient(createUrqlClient, { ssr: true })(Index);
  */
-export const createUrqlClient = (ssrExchange: any): ClientOptions => ({
-	url: 'http://localhost:4000/graphql',
-	fetchOptions: {
-		credentials: 'include',
-	},
-	exchanges: [
-		dedupExchange,
-		cacheExchange({
-			resolvers: {
-				Query: {
-					posts: cursorPagination(),
-				},
-			},
-			updates: {
-				Mutation: {
-					login: (_result, args, cache, info) => {
-						betterUpdateQuery<LoginMutation, MeQuery>(
-							cache,
-							{ query: MeDocument },
-							_result,
-							(loginResult, queryData) => {
-								if (loginResult.login.errors) {
-									return queryData;
-								} else {
-									return {
-										me: loginResult.login.user,
-									};
-								}
-							},
-						);
-					},
-					register: (_result, args, cache, info) => {
-						betterUpdateQuery<RegisterMutation, MeQuery>(
-							cache,
-							{ query: MeDocument },
-							_result,
-							(loginResult, queryData) => {
-								if (loginResult.register.errors) {
-									return queryData;
-								} else {
-									return {
-										me: loginResult.register.user,
-									};
-								}
-							},
-						);
-					},
-					logout: (_result, args, cache, info) => {
-						betterUpdateQuery<LogoutMutation, MeQuery>(
-							cache,
-							{ query: MeDocument },
-							_result,
-							() => {
-								return { me: null };
-							},
-						);
+export const createUrqlClient = (ssrExchange: any, ctx: any): ClientOptions => {
+	// to pass the cookie when using ssr
+	let cookie;
+	if (isServer()) {
+		cookie = ctx.req.headers.cookie;
+	}
+	return {
+		url: 'http://localhost:4000/graphql',
+		fetchOptions: {
+			credentials: 'include',
+			headers: cookie ? { cookie } : undefined,
+		},
+		exchanges: [
+			dedupExchange,
+			cacheExchange({
+				resolvers: {
+					Query: {
+						posts: cursorPagination(),
 					},
 				},
-			},
-		}),
-		errorExchange,
-		ssrExchange,
-		fetchExchange,
-	],
-});
+				updates: {
+					Mutation: {
+						login: (_result, args, cache, info) => {
+							betterUpdateQuery<LoginMutation, MeQuery>(
+								cache,
+								{ query: MeDocument },
+								_result,
+								(loginResult, queryData) => {
+									if (loginResult.login.errors) {
+										return queryData;
+									} else {
+										return {
+											me: loginResult.login.user,
+										};
+									}
+								},
+							);
+						},
+						register: (_result, args, cache, info) => {
+							betterUpdateQuery<RegisterMutation, MeQuery>(
+								cache,
+								{ query: MeDocument },
+								_result,
+								(loginResult, queryData) => {
+									if (loginResult.register.errors) {
+										return queryData;
+									} else {
+										return {
+											me: loginResult.register.user,
+										};
+									}
+								},
+							);
+						},
+						logout: (_result, args, cache, info) => {
+							betterUpdateQuery<LogoutMutation, MeQuery>(
+								cache,
+								{ query: MeDocument },
+								_result,
+								() => {
+									return { me: null };
+								},
+							);
+						},
+						createPost: invalidateQueryCache('posts'),
+						vote: invalidateQueryCache('posts'),
+					},
+				},
+			}),
+			errorExchange,
+			ssrExchange,
+			fetchExchange,
+		],
+	};
+};

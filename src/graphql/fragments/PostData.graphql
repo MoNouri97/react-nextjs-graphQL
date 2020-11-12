@@ -1,0 +1,13 @@
+fragment PostData on Post {
+	id
+	title
+	textPreview
+	points
+	voteStatus
+	creator {
+		id
+		username
+	}
+	createdAt
+	updatedAt
+}

@@ -1,4 +1,13 @@
-import { Box, Button, Flex, Heading, Link, Stack, Text } from '@chakra-ui/core';
+import {
+	Box,
+	Button,
+	Flex,
+	Heading,
+	Icon,
+	Link,
+	Stack,
+	Text,
+} from '@chakra-ui/core';
 import { withUrqlClient } from 'next-urql';
 import Layout from '../components/Layout';
 
@@ -7,6 +16,7 @@ import { usePostsQuery } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import NextLink from 'next/link';
 import { useState } from 'react';
+import Post from '../components/Post';
 
 const Index = () => {
 	const [variables, setVariables] = useState({
@@ -14,7 +24,8 @@ const Index = () => {
 		cursor: null as null | string,
 	});
 	const [{ data, fetching }] = usePostsQuery({ variables });
-	if (!data && !fetching) return <p>!!! query error !!!</p>;
+
+	if (!data && !fetching) return <Heading>!!! query error !!!</Heading>;
 
 	return (
 		<Layout variant='regular'>
@@ -28,12 +39,9 @@ const Index = () => {
 			{!data ? (
 				'loading'
 			) : (
-				<Stack spacing={8}>
+				<Stack spacing={10}>
 					{data.posts.posts.map(post => (
-						<Box key={post.id} shadow='md' borderWidth='1px' p={5}>
-							<Heading fontSize='xl'>{post.title}</Heading>
-							<Text mt={4}>{post.textPreview}</Text>
-						</Box>
+						<Post key={post.id} post={post} />
 					))}
 				</Stack>
 			)}
